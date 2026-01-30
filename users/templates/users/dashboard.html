@@ -1,0 +1,13 @@
+<h1>My Orders</h1>
+<ul>
+    {% for order in orders %}
+        <li>Order #{{ order.id }} - Total: ${{ order.total_amount }}</li>
+        <ul>
+            {% for ticket in order.tickets.all %}
+                <li>{{ ticket.event.title }} - {{ ticket.type }} Ticket</li>
+            {% endfor %}
+        </ul>
+    {% empty %}
+        <li>You have no orders yet.</li>
+    {% endfor %}
+</ul>

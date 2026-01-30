@@ -1,0 +1,104 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Organizer Dashboard</h2>
+        <a href="{% url 'events:create' %}" class="btn btn-primary">
+            <i class="bi bi-plus-lg"></i> Create New Event
+        </a>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="row g-4 mb-5">
+        <div class="col-md-4">
+            <div class="card bg-primary text-white shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">Total Events</h5>
+                    <h2 class="display-6">{{ total_events }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-success text-white shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">Tickets Sold</h5>
+                    <h2 class="display-6">{{ total_sales }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-info text-white shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">Total Revenue</h5>
+                    <h2 class="display-6">${{ total_revenue|floatformat:2 }}</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Events Table -->
+    <div class="card shadow-sm">
+        <div class="card-header bg-light">
+            <h5 class="mb-0">My Events</h5>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Event Name</th>
+                            <th>Date</th>
+                            <th>Status</th>
+                            <th>Tickets Sold</th>
+                            <th>Revenue</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for event in events %}
+                            <tr>
+                                <td>
+                                    <strong>{{ event.name }}</strong>
+                                    {% if not event.is_published %}
+                                        <span class="badge bg-secondary ms-2">Draft</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ event.date|date:"M d, Y" }}</td>
+                                <td>
+                                    {% if event.status == 'Upcoming' %}
+                                        <span class="badge bg-primary">Upcoming</span>
+                                    {% elif event.status == 'Ongoing' %}
+                                        <span class="badge bg-success">Ongoing</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">Past</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ event.total_tickets_sold|default:"0" }}</td>
+                                <td>${{ event.revenue|default:"0.00"|floatformat:2 }}</td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        <a href="{% url 'events:detail' event.id %}" class="btn btn-outline-secondary" title="View">
+                                            View
+                                        </a>
+                                        <a href="{% url 'events:export_attendees' event.id %}" class="btn btn-outline-success" title="Export Attendees">
+                                            Export CSV
+                                        </a>
+                                        <a href="{% url 'events:update' event.id %}" class="btn btn-outline-primary" title="Edit">Edit</a>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="6" class="text-center py-4 text-muted">
+                                    You haven't created any events yet.
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

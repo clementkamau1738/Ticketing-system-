@@ -1,0 +1,2 @@
+# Ticketing-system-
+EventHub is a full-stack event discovery and ticketing platform built with Django and PostgreSQL. It allows users to browse events by location and category, purchase tickets securely via Stripe and M-Pesa, and receive digital tickets with QR codes for event entry. Organizers can create and manage events, track ticket sales, and monitor attendance through a dedicated dashboard. The system includes search functionality, role-based access control, payment processing, and scalable infrastructure designed for real-world event management.

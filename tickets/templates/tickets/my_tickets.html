@@ -1,0 +1,65 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2 class="mb-4">My Tickets</h2>
+    
+    {% if issued_tickets %}
+        <div class="row row-cols-1 row-cols-md-2 g-4">
+            {% for ticket in issued_tickets %}
+                <div class="col">
+                    <div class="card h-100 shadow-sm">
+                        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                            <span>{{ ticket.ticket.event.name }}</span>
+                            <span class="badge bg-light text-primary">{{ ticket.ticket.get_type_display }}</span>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-8">
+                                    <h5 class="card-title">{{ ticket.ticket.event.venue|default:"Venue TBA" }}</h5>
+                                    <p class="card-text text-muted">
+                                        <i class="bi bi-calendar"></i> {{ ticket.ticket.event.date|date:"F j, Y, P" }}
+                                    </p>
+                                    <p class="card-text">
+                                        <strong>Order ID:</strong> #{{ ticket.order.id|truncatechars:8 }}<br>
+                                        <strong>Status:</strong> 
+                                        {% if ticket.is_redeemed %}
+                                            <span class="text-danger">Redeemed</span>
+                                        {% else %}
+                                            <span class="text-success">Valid</span>
+                                        {% endif %}
+                                    </p>
+                                </div>
+                                <div class="col-md-4 text-center">
+                                    {% if ticket.qr_code %}
+                                        <img src="{{ ticket.qr_code.url }}" alt="QR Code" class="img-fluid mb-2" style="max-width: 100px;">
+                                        <a href="{{ ticket.qr_code.url }}" download="ticket_{{ ticket.id }}.png" class="btn btn-sm btn-outline-secondary">
+                                            Download QR
+                                        </a>
+                                    {% else %}
+                                        <div class="text-muted p-3 border rounded bg-light">
+                                            No QR Code
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-footer text-muted font-monospace small">
+                            Ticket ID: {{ ticket.id }}
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="alert alert-info">
+            You haven't purchased any tickets yet. <a href="{% url 'events:list' %}" class="alert-link">Browse events</a> to get started!
+        </div>
+    {% endif %}
+    
+    <div class="mt-5">
+        <h4>Quick Actions</h4>
+        <a href="{% url 'orders:history' %}" class="btn btn-outline-primary">View Order History</a>
+    </div>
+</div>
+{% endblock %}

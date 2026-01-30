@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-5 text-center">
+    <div class="alert alert-danger shadow-sm p-5">
+        <h1 class="display-1 text-danger"><i class="bi bi-shield-lock-fill"></i></h1>
+        <h2 class="mb-4">Access Denied</h2>
+        <p class="lead">You do not have permission to view this page.</p>
+        <p class="text-muted mb-4">This area is restricted to Event Organizers only.</p>
+        
+        <div class="d-flex justify-content-center gap-3">
+            <a href="{% url 'home' %}" class="btn btn-primary">Go Home</a>
+            <a href="{% url 'events:list' %}" class="btn btn-outline-secondary">Browse Events</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

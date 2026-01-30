@@ -1,0 +1,36 @@
+<footer class="bg-dark text-white py-5">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-4 mb-4">
+                <h5>EventHub</h5>
+                <p>Discover and book the best events in Kenya.</p>
+            </div>
+            <div class="col-md-2 mb-4">
+                <h6>Explore</h6>
+                <ul class="list-unstyled">
+                    <li><a href="{% url 'events:list' %}" class="text-white">Events</a></li>
+                    <li><a href="#" class="text-white">Categories</a></li>
+                </ul>
+            </div>
+            <div class="col-md-3 mb-4">
+                <h6>For Organizers</h6>
+                <ul class="list-unstyled">
+                    <li><a href="{% url 'events:create' %}" class="text-white">Create Event</a></li>
+                    <li><a href="#" class="text-white">Dashboard</a></li>
+                </ul>
+            </div>
+            <div class="col-md-3">
+                <h6>Legal</h6>
+                <ul class="list-unstyled">
+                    <li><a href="#" class="text-white">Terms & Conditions</a></li>
+                    <li><a href="#" class="text-white">Privacy Policy</a></li>
+                    <li><a href="#" class="text-white">Refund Policy</a></li>
+                </ul>
+            </div>
+        </div>
+        <hr class="my-4">
+        <div class="text-center">
+            <p>&copy; {% now "Y" %} EventHub Kenya. All rights reserved.</p>
+        </div>
+    </div>
+</footer>

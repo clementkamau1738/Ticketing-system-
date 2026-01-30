@@ -1,0 +1,300 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Discover Events in Kenya - EventHub{% endblock %}
+
+{% block extra_css %}
+<style>
+    .hero-bg {
+        background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)),
+               url("{% static 'img/hero-bg.jpg' %}") center/cover no-repeat;
+        min-height: 80vh;
+        display: flex;
+        align-items: center;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- 1. Hero Section -->
+<section class="hero text-white text-center py-5 hero-bg">
+    <div class="container">
+        <h1 class="display-3 fw-bold mb-4">
+            Discover and book tickets for the best events near you
+        </h1>
+        <p class="lead mb-5">
+            Concerts, workshops, sports, tech meetups — all in Nairobi and beyond.
+        </p>
+
+        <div class="d-flex justify-content-center gap-3 flex-wrap">
+            <a href="{% url 'events:list' %}" class="btn btn-primary btn-lg px-5 py-3">
+                🎟 Browse Events
+            </a>
+            {% if user.is_authenticated %}
+                {% if user.role == 'organizer' %}
+                    <a href="{% url 'events:create' %}" class="btn btn-outline-light btn-lg px-5 py-3">
+                        ➕ Create Event
+                    </a>
+                {% endif %}
+            {% else %}
+                <a href="{% url 'login' %}?next={% url 'events:create' %}" class="btn btn-outline-light btn-lg px-5 py-3">
+                    ➕ Create Event
+                </a>
+            {% endif %}
+        </div>
+
+        <!-- Event Organizers Tag -->
+        {% if not user.is_authenticated or user.role == 'organizer' %}
+        <div class="mt-4">
+            <a href="{% if user.is_authenticated %}{% url 'events:create' %}{% else %}{% url 'login' %}?next={% url 'events:create' %}{% endif %}" class="text-white text-decoration-none">
+                <span class="badge bg-warning text-dark me-2">Event Organizers</span>
+                <span class="text-decoration-underline">Click here to login and create event</span>
+            </a>
+        </div>
+        {% endif %}
+
+        <div class="mt-5">
+            <small>
+                Showing events near <strong>{{ request.GET.q|default:"Nairobi" }}</strong> •
+                <div class="dropdown d-inline">
+                    <a class="text-white text-decoration-underline dropdown-toggle" href="#" id="countyDropdown" data-bs-toggle="dropdown" aria-expanded="false">Change location</a>
+                    <ul class="dropdown-menu dropdown-menu-dark">
+                        <li><a class="dropdown-item" href="{% url 'events:list' %}?q=Nairobi">Nairobi</a></li>
+                        <li><a class="dropdown-item" href="{% url 'events:list' %}?q=Mombasa">Mombasa</a></li>
+                        <li><a class="dropdown-item" href="{% url 'events:list' %}?q=Kiambu">Kiambu</a></li>
+                        <li><a class="dropdown-item" href="{% url 'events:list' %}?q=Nakuru">Nakuru</a></li>
+                        <li><a class="dropdown-item" href="{% url 'events:list' %}?q=Kisumu">Kisumu</a></li>
+                        <li><a class="dropdown-item" href="{% url 'events:list' %}?q=Machakos">Machakos</a></li>
+                        <li><a class="dropdown-item" href="{% url 'events:list' %}?q=Uasin Gishu">Uasin Gishu</a></li>
+                        <li><a class="dropdown-item" href="{% url 'events:list' %}?q=Kajiado">Kajiado</a></li>
+                        <li><a class="dropdown-item" href="{% url 'events:list' %}?q=Nyeri">Nyeri</a></li>
+                        <li><a class="dropdown-item" href="{% url 'events:list' %}?q=Murang'a">Murang'a</a></li>
+                        <li><a class="dropdown-item" href="{% url 'events:list' %}?q=Kakamega">Kakamega</a></li>
+                        <li><a class="dropdown-item" href="{% url 'events:list' %}?q=Embu">Embu</a></li>
+                        <li><a class="dropdown-item" href="{% url 'events:list' %}?q=Meru">Meru</a></li>
+                        <li><a class="dropdown-item" href="{% url 'events:list' %}?q=Turkana">Turkana</a></li>
+                        <li><a class="dropdown-item" href="{% url 'events:list' %}?q=Laikipia">Laikipia</a></li>
+                    </ul>
+                </div>
+            </small>
+        </div>
+    </div>
+</section>
+
+<!-- 2. Dashboard Quick Access (If Logged In) -->
+{% if user.is_authenticated %}
+<section class="py-4 bg-white border-bottom">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-md-3">
+                <h4 class="mb-0">👋 Welcome back, {{ user.username }}!</h4>
+            </div>
+            <div class="col-md-9">
+                <div class="d-flex gap-3 justify-content-md-end flex-wrap">
+                    <a href="{% url 'events:list' %}" class="btn btn-outline-primary d-flex align-items-center gap-2">
+                        <span>📅</span> Events
+                    </a>
+                    {% if user.role == 'organizer' %}
+                        <a href="{% url 'events:my_events' %}" class="btn btn-outline-success d-flex align-items-center gap-2">
+                            <span>📊</span> Organizer Dashboard
+                        </a>
+                        <a href="{% url 'events:create' %}" class="btn btn-success d-flex align-items-center gap-2">
+                            <span>➕</span> Create Event
+                        </a>
+                    {% else %}
+                        <a href="{% url 'tickets:my_tickets' %}" class="btn btn-outline-info d-flex align-items-center gap-2">
+                            <span>🎟</span> My Tickets
+                        </a>
+                        <a href="{% url 'orders:history' %}" class="btn btn-outline-secondary d-flex align-items-center gap-2">
+                            <span>🧾</span> My Orders
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- 3. Search & Filter Section -->
+<section class="py-5 bg-light">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-10">
+                <form class="row g-3" method="get" action="{% url 'events:list' %}">
+                    <div class="col-md-5">
+                        <input
+                            type="text"
+                            class="form-control form-control-lg"
+                            name="q"
+                            placeholder="Search events, artists, venues..."
+                            value="{{ request.GET.q }}"
+                        >
+                    </div>
+
+                    <div class="col-md-3">
+                        <select class="form-select form-select-lg" name="date">
+                            <option value="">Any date</option>
+                            <option value="today">Today</option>
+                            <option value="this-week">This week</option>
+                            <option value="this-month">This month</option>
+                            <option value="weekend">This weekend</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-2">
+                        <select class="form-select form-select-lg" name="price">
+                            <option value="">Any price</option>
+                            <option value="free">Free</option>
+                            <option value="paid">Paid</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-2">
+                        <button type="submit" class="btn btn-primary btn-lg w-100">
+                            Search
+                        </button>
+                    </div>
+                </form>
+
+                <!-- Extra Filters -->
+                <div class="mt-4 d-flex flex-wrap gap-3 justify-content-center">
+                    <div class="dropdown">
+                        <button class="btn btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">
+                            Sort by
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="?sort=upcoming">Upcoming</a></li>
+                            <li><a class="dropdown-item" href="?sort=popular">Popular</a></li>
+                            <li><a class="dropdown-item" href="?sort=new">Recently added</a></li>
+                        </ul>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- 4. Featured Events Section -->
+<section class="py-5">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="fw-bold">🔥 Featured Events</h2>
+            <p class="text-muted">Handpicked events you shouldn’t miss</p>
+        </div>
+
+        <div class="row g-4">
+            {% for event in events %}
+                <div class="col-md-4">
+                    <div class="card h-100 shadow-sm">
+                        {% if event.poster %}
+                            <img src="{{ event.poster.url }}" class="card-img-top" alt="{{ event.name }}">
+                        {% else %}
+                            <div class="bg-secondary text-white d-flex align-items-center justify-content-center" style="height: 180px;">
+                                No image
+                            </div>
+                        {% endif %}
+                        <div class="card-body">
+                            <h5 class="card-title">{{ event.name }}</h5>
+                            <p class="text-muted mb-2">
+                                {{ event.date|date:"M d, Y H:i" }} • {{ event.venue|default:event.online_link|truncatewords:6 }}
+                            </p>
+                            <p class="card-text">{{ event.description|truncatewords:15 }}</p>
+                            <a href="{% url 'events:detail' event.id %}" class="btn btn-outline-primary w-100">
+                                View Details
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            {% empty %}
+                <p class="text-center text-muted">No events available.</p>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<!-- 5. How It Works Section -->
+<section class="py-5">
+    <div class="container">
+        <h2 class="text-center mb-5">How It Works</h2>
+        <div class="row text-center g-4">
+            <div class="col-md-4">
+                <div class="p-4 border rounded shadow-sm">
+                    <div class="display-1 text-primary mb-3">1</div>
+                    <h4>Browse Events</h4>
+                    <p>Find events near you or online using search & filters.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="p-4 border rounded shadow-sm">
+                    <div class="display-1 text-primary mb-3">2</div>
+                    <h4>Book Securely</h4>
+                    <p>Pay with M-Pesa, card or wallet — instant confirmation.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="p-4 border rounded shadow-sm">
+                    <div class="display-1 text-primary mb-3">3</div>
+                    <h4>Attend & Enjoy</h4>
+                    <p>Show your QR ticket at the door — easy entry.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- 6. Why Us Section -->
+<section class="py-5 bg-dark text-white">
+    <div class="container">
+        <h2 class="text-center mb-5">Why Choose EventHub?</h2>
+        <div class="row g-4">
+            <div class="col-md-4">
+                <h5>🔒 Secure Payments</h5>
+                <p>M-Pesa, Stripe — protected & reliable.</p>
+            </div>
+            <div class="col-md-4">
+                <h5>⚡ Instant Ticket Delivery</h5>
+                <p>Get your e-ticket & QR code immediately via email/WhatsApp.</p>
+            </div>
+            <div class="col-md-4">
+                <h5>✅ Verified Organizers</h5>
+                <p>Only trusted creators — no spam events.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- 7. Organizer CTA Section -->
+<section class="py-5 text-center bg-light">
+    <div class="container">
+        <h2 class="fw-bold mb-3">
+            Hosting an Event?
+        </h2>
+        <p class="lead text-muted mb-4">
+            Sell tickets easily, track sales, manage attendees — all in one powerful dashboard.
+        </p>
+
+        <div class="d-flex justify-content-center gap-3 flex-wrap">
+            {% if user.is_authenticated %}
+                {% if user.role == 'organizer' %}
+                    <a href="{% url 'events:create' %}" class="btn btn-success btn-lg px-5">
+                        ➕ Create Event Now
+                    </a>
+                {% endif %}
+            {% else %}
+                <a href="{% url 'login' %}?next={% url 'events:create' %}" class="btn btn-success btn-lg px-5">
+                    ➕ Create Event Now
+                </a>
+            {% endif %}
+            {% if user.is_authenticated and user.role == 'organizer' %}
+                <a href="{% url 'events:my_events' %}" class="btn btn-outline-success btn-lg px-5">
+                    📊 View Dashboard
+                </a>
+            {% endif %}
+        </div>
+    </div>
+</section>
+
+{% endblock %}
