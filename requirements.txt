@@ -31,4 +31,6 @@ urllib3==2.6.3
 vine==5.1.0
 wcwidth==0.2.14
 sentry-sdk
+psycopg2-binary
+
 
