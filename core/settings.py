@@ -19,18 +19,14 @@ import environ
 import os
 import warnings
 
-# ----------------------------------------------------------------
 # ENVIRONMENT SETUP
-# ----------------------------------------------------------------
 env = environ.Env(
     DEBUG=(bool, False)
 )
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# ────────────────────────────────────────────────
 #           Very important change ↓↓↓
-# ────────────────────────────────────────────────
 # Always try to read .env file — does nothing if missing
 env.read_env(BASE_DIR / '.env')     # ← this is safe on Render / production
 
@@ -38,9 +34,7 @@ env.read_env(BASE_DIR / '.env')     # ← this is safe on Render / production
 if not (BASE_DIR / '.env').exists() and os.environ.get('DEBUG', '').lower() in ('true', '1', 'yes'):
     warnings.warn("⚠️  No .env file found → using real environment variables")
 
-# ----------------------------------------------------------------
 # SECURITY
-# ----------------------------------------------------------------
 SECRET_KEY = env("SECRET_KEY")                   # ← must be set in Render!
 DEBUG = env.bool("DEBUG", default=False)
 
@@ -64,9 +58,8 @@ if not DEBUG:
     SECURE_HSTS_PRELOAD = True
     SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
-# ----------------------------------------------------------------
 # APPLICATIONS + DATABASE
-# ----------------------------------------------------------------
+
 INSTALLED_APPS = [
     "django.contrib.admin",
     "django.contrib.auth",
@@ -92,9 +85,7 @@ DATABASES = {
     )
 }
 
-# ----------------------------------------------------------------
 # THE REST OF YOUR SETTINGS (only small improvements)
-# ----------------------------------------------------------------
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
