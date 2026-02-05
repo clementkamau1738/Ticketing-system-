@@ -10,36 +10,52 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
+"""
+Django settings for core project.
+"""
+
 from pathlib import Path
 import environ
 import os
 import warnings
 
+# ----------------------------------------------------------------
 # ENVIRONMENT SETUP
+# ----------------------------------------------------------------
 env = environ.Env(
     DEBUG=(bool, False)
 )
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# Load .env file
-env_file = BASE_DIR / ".env"
-if not env_file.exists():
-    raise RuntimeError("❌ .env file not found at project root")
-environ.Env.read_env(env_file)
+# ────────────────────────────────────────────────
+#           Very important change ↓↓↓
+# ────────────────────────────────────────────────
+# Always try to read .env file — does nothing if missing
+env.read_env(BASE_DIR / '.env')     # ← this is safe on Render / production
 
+# Optional: warn locally only when you are in development
+if not (BASE_DIR / '.env').exists() and os.environ.get('DEBUG', '').lower() in ('true', '1', 'yes'):
+    warnings.warn("⚠️  No .env file found → using real environment variables")
+
+# ----------------------------------------------------------------
 # SECURITY
-SECRET_KEY = env('SECRET_KEY')
+# ----------------------------------------------------------------
+SECRET_KEY = env("SECRET_KEY")                   # ← must be set in Render!
 DEBUG = env.bool("DEBUG", default=False)
-ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=["localhost", "127.0.0.1"])
+
+ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=[
+    "localhost",
+    "127.0.0.1",
+    ".onrender.com",               # ← good default for render
+])
 
 if SECRET_KEY.startswith("django-insecure"):
     warnings.warn("⚠️ Using an insecure SECRET_KEY. Do not use this in production.")
 
-DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 if not DEBUG:
-    # HTTPS / HSTS
     SECURE_SSL_REDIRECT = True
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
@@ -48,129 +64,127 @@ if not DEBUG:
     SECURE_HSTS_PRELOAD = True
     SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
-# INSTALLED APPS
+# ----------------------------------------------------------------
+# APPLICATIONS + DATABASE
+# ----------------------------------------------------------------
 INSTALLED_APPS = [
-    'django.contrib.admin',
-    'django.contrib.auth',
-    'django.contrib.contenttypes',
-    'django.contrib.sessions',
-    'django.contrib.messages',
-    'django.contrib.staticfiles',
-    'rest_framework.authtoken',
-    'rest_framework',
-    'events',
-    'tickets',
-    'users',
-    'orders',
+    "django.contrib.admin",
+    "django.contrib.auth",
+    "django.contrib.contenttypes",
+    "django.contrib.sessions",
+    "django.contrib.messages",
+    "django.contrib.staticfiles",
+    "rest_framework.authtoken",
+    "rest_framework",
+    "events",
+    "tickets",
+    "users",
+    "orders",
 ]
 
-AUTH_USER_MODEL = 'users.CustomUser'
+AUTH_USER_MODEL = "users.CustomUser"
 
-# MIDDLEWARE
+# Database – very common pattern on Render
+DATABASES = {
+    "default": env.db(
+        # will use DATABASE_URL if exists, otherwise fallback
+        default="sqlite:///" + str(BASE_DIR / "db.sqlite3")
+    )
+}
+
+# ----------------------------------------------------------------
+# THE REST OF YOUR SETTINGS (only small improvements)
+# ----------------------------------------------------------------
+
 MIDDLEWARE = [
-    'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',  # <--- WhiteNoise for static files
-    'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
+    "django.contrib.sessions.middleware.SessionMiddleware",
+    "django.middleware.common.CommonMiddleware",
+    "django.middleware.csrf.CsrfViewMiddleware",
+    "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "django.contrib.messages.middleware.MessageMiddleware",
+    "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
-# URLS & TEMPLATES
-ROOT_URLCONF = 'core.urls'
+ROOT_URLCONF = "core.urls"
 
 TEMPLATES = [
     {
-        'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'templates'],
-        'APP_DIRS': True,
-        'OPTIONS': {
-            'context_processors': [
-                'django.template.context_processors.request',
-                'django.contrib.auth.context_processors.auth',
-                'django.contrib.messages.context_processors.messages',
+        "BACKEND": "django.template.backends.django.DjangoTemplates",
+        "DIRS": [BASE_DIR / "templates"],
+        "APP_DIRS": True,
+        "OPTIONS": {
+            "context_processors": [
+                "django.template.context_processors.request",
+                "django.contrib.auth.context_processors.auth",
+                "django.contrib.messages.context_processors.messages",
             ],
         },
     },
 ]
 
-WSGI_APPLICATION = 'core.wsgi.application'
+WSGI_APPLICATION = "core.wsgi.application"
 
-# DATABASE
-if env("DATABASE_URL", default=None):
-    DATABASES = {'default': env.db()}
-else:
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / 'db.sqlite3',
-        }
-    }
-
-# PASSWORD VALIDATION
+# Password validation
 AUTH_PASSWORD_VALIDATORS = [
-    {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
-    {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
-    {'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator'},
-    {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
+    {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
+    {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator"},
+    {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
+    {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
 ]
 
-# INTERNATIONALIZATION
-LANGUAGE_CODE = 'en-us'
-TIME_ZONE = 'UTC'
+# Internationalization
+LANGUAGE_CODE = "en-us"
+TIME_ZONE = "UTC"
 USE_I18N = True
 USE_TZ = True
 
-# STATIC & MEDIA FILES
-STATIC_URL = '/static/'
+# Static files
+STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 STATICFILES_DIRS = [BASE_DIR / "static"]
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
+# Media files – S3 or local
 USE_S3 = env.bool("USE_S3", default=False)
+
 if USE_S3:
     AWS_ACCESS_KEY_ID = env("AWS_ACCESS_KEY_ID")
     AWS_SECRET_ACCESS_KEY = env("AWS_SECRET_ACCESS_KEY")
     AWS_STORAGE_BUCKET_NAME = env("AWS_STORAGE_BUCKET_NAME")
     AWS_S3_REGION_NAME = env("AWS_S3_REGION_NAME", default="us-east-1")
     AWS_S3_SIGNATURE_VERSION = "s3v4"
-    
+
     DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
     MEDIA_URL = f"https://{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com/"
 else:
-    MEDIA_URL = '/media/'
-    MEDIA_ROOT = BASE_DIR / 'media'
+    MEDIA_URL = "/media/"
+    MEDIA_ROOT = BASE_DIR / "media"
 
-# DJANGO REST FRAMEWORK
+# DRF
 REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework.authentication.TokenAuthentication',
-        'rest_framework.authentication.SessionAuthentication',
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "rest_framework.authentication.TokenAuthentication",
+        "rest_framework.authentication.SessionAuthentication",
     ],
-    'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.permissions.IsAuthenticated',
+    "DEFAULT_PERMISSION_CLASSES": ["rest_framework.permissions.IsAuthenticated"],
+    "DEFAULT_THROTTLE_CLASSES": [
+        "rest_framework.throttling.AnonRateThrottle",
+        "rest_framework.throttling.UserRateThrottle",
     ],
-    'DEFAULT_THROTTLE_CLASSES': [
-        'rest_framework.throttling.AnonRateThrottle',
-        'rest_framework.throttling.UserRateThrottle'
-    ],
-    'DEFAULT_THROTTLE_RATES': {
-        'anon': '100/day',
-        'user': '1000/day'
-    }
+    "DEFAULT_THROTTLE_RATES": {"anon": "100/day", "user": "1000/day"},
 }
 
-# CELERY CONFIGURATION
+# Celery
 CELERY_BROKER_URL = env("CELERY_BROKER_URL", default="redis://127.0.0.1:6379/0")
 CELERY_RESULT_BACKEND = env("CELERY_RESULT_BACKEND", default="redis://127.0.0.1:6379/0")
-CELERY_ACCEPT_CONTENT = ['json']
-CELERY_TASK_SERIALIZER = 'json'
-CELERY_RESULT_SERIALIZER = 'json'
+CELERY_ACCEPT_CONTENT = ["json"]
+CELERY_TASK_SERIALIZER = "json"
+CELERY_RESULT_SERIALIZER = "json"
 CELERY_TIMEZONE = TIME_ZONE
 
-# SENTRY CONFIGURATION
+# Sentry
 import sentry_sdk
 from sentry_sdk.integrations.django import DjangoIntegration
 from sentry_sdk.integrations.celery import CeleryIntegration
@@ -182,28 +196,28 @@ if SENTRY_DSN and not DEBUG:
         dsn=SENTRY_DSN,
         integrations=[DjangoIntegration(), CeleryIntegration(), RedisIntegration()],
         traces_sample_rate=0.1,
-        send_default_pii=True
+        send_default_pii=True,
     )
 
-# STRIPE CONFIGURATION
+# Stripe
 STRIPE_SECRET_KEY = env("STRIPE_SECRET_KEY")
 STRIPE_PUBLISHABLE_KEY = env("STRIPE_PUBLISHABLE_KEY")
-STRIPE_SUCCESS_URL = env("STRIPE_SUCCESS_URL", default="http://localhost:8000/orders/success/")
-STRIPE_CANCEL_URL = env("STRIPE_CANCEL_URL", default="http://localhost:8000/orders/cancel/")
+STRIPE_SUCCESS_URL = env("STRIPE_SUCCESS_URL", default="https://your-app.onrender.com/orders/success/")
+STRIPE_CANCEL_URL = env("STRIPE_CANCEL_URL", default="https://your-app.onrender.com/orders/cancel/")
 STRIPE_WEBHOOK_SECRET = env("STRIPE_WEBHOOK_SECRET", default="")
 
-# EMAIL CONFIGURATION
-EMAIL_BACKEND = env('EMAIL_BACKEND', default='django.core.mail.backends.smtp.EmailBackend')
-EMAIL_HOST = env('EMAIL_HOST', default='smtp.gmail.com')
-EMAIL_PORT = env.int('EMAIL_PORT', default=587)
-EMAIL_USE_TLS = env.bool('EMAIL_USE_TLS', default=True)
-EMAIL_HOST_USER = env('EMAIL_HOST_USER', default='')
-EMAIL_HOST_PASSWORD = env('EMAIL_HOST_PASSWORD', default='')
-DEFAULT_FROM_EMAIL = env('DEFAULT_FROM_EMAIL', default=EMAIL_HOST_USER)
+# Email
+EMAIL_BACKEND = env("EMAIL_BACKEND", default="django.core.mail.backends.smtp.EmailBackend")
+EMAIL_HOST = env("EMAIL_HOST", default="smtp.gmail.com")
+EMAIL_PORT = env.int("EMAIL_PORT", default=587)
+EMAIL_USE_TLS = env.bool("EMAIL_USE_TLS", default=True)
+EMAIL_HOST_USER = env("EMAIL_HOST_USER", default="")
+EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD", default="")
+DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", default=EMAIL_HOST_USER)
 
-# M-PESA CONFIGURATION
-MPESA_CONSUMER_KEY = env("MPESA_CONSUMER_KEY", default="your_consumer_key")
-MPESA_CONSUMER_SECRET = env("MPESA_CONSUMER_SECRET", default="your_consumer_secret")
-MPESA_SHORTCODE = env("MPESA_SHORTCODE", default="174379")
-MPESA_PASSKEY = env("MPESA_PASSKEY", default="your_passkey")
-MPESA_CALLBACK_URL = env("MPESA_CALLBACK_URL", default="http://localhost:8000/api/mpesa/callback/")
+# M-PESA
+MPESA_CONSUMER_KEY = env("MPESA_CONSUMER_KEY", default="")
+MPESA_CONSUMER_SECRET = env("MPESA_CONSUMER_SECRET", default="")
+MPESA_SHORTCODE = env("MPESA_SHORTCODE", default="")
+MPESA_PASSKEY = env("MPESA_PASSKEY", default="")
+MPESA_CALLBACK_URL = env("MPESA_CALLBACK_URL", default="")
