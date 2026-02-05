@@ -13,45 +13,29 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 from pathlib import Path
 import environ
 import os
+import warnings
+
+# ENVIRONMENT SETUP
 env = environ.Env(
-    # Set default values and type casting
     DEBUG=(bool, False)
-    )
+)
 
-
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# Load .env file explicitly and fail fast if missing
+# Load .env file
 env_file = BASE_DIR / ".env"
 if not env_file.exists():
     raise RuntimeError("❌ .env file not found at project root")
-
 environ.Env.read_env(env_file)
 
-
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
-
-# SECURITY WARNING: keep the secret key used in production secret!
+# SECURITY
 SECRET_KEY = env('SECRET_KEY')
-
-# SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env.bool("DEBUG", default=False)
-
 ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=["localhost", "127.0.0.1"])
 
 if SECRET_KEY.startswith("django-insecure"):
-    import warnings
-    warnings.warn(
-        "⚠️ Using an insecure SECRET_KEY. Do not use this in production."
-    )
+    warnings.warn("⚠️ Using an insecure SECRET_KEY. Do not use this in production.")
 
-
-
-# --------------------------------------------------
-# PRODUCTION SECURITY
-# --------------------------------------------------
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 if not DEBUG:
@@ -59,13 +43,12 @@ if not DEBUG:
     SECURE_SSL_REDIRECT = True
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
-    SECURE_HSTS_SECONDS = 31536000  # 1 year
+    SECURE_HSTS_SECONDS = 31536000
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True
     SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
-# Application definition
-
+# INSTALLED APPS
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -80,37 +63,13 @@ INSTALLED_APPS = [
     'users',
     'orders',
 ]
+
 AUTH_USER_MODEL = 'users.CustomUser'
 
-# --------------------------------------------------
-# CACHE CONFIGURATION
-# --------------------------------------------------
-# By default use in-memory cache so the project works without Redis.
-# To enable Redis, set USE_REDIS_CACHE=true and configure REDIS_URL.
-USE_REDIS_CACHE = env.bool("USE_REDIS_CACHE", default=False)
-
-if USE_REDIS_CACHE:
-    CACHES = {
-        "default": {
-            "BACKEND": "django_redis.cache.RedisCache",
-            "LOCATION": env("REDIS_URL", default="redis://127.0.0.1:6379/1"),
-            "OPTIONS": {
-                "CLIENT_CLASS": "django_redis.client.DefaultClient",
-            }
-        }
-    }
-else:
-    CACHES = {
-        "default": {
-            "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
-            "LOCATION": "default",
-        }
-    }
-LOGIN_REDIRECT_URL = 'home'
-LOGOUT_REDIRECT_URL = 'home'
-
+# MIDDLEWARE
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',  # <--- WhiteNoise for static files
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -119,8 +78,8 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
+# URLS & TEMPLATES
 ROOT_URLCONF = 'core.urls'
-
 
 TEMPLATES = [
     {
@@ -139,14 +98,9 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'core.wsgi.application'
 
-
-# Database
-# https://docs.djangoproject.com/en/6.0/ref/settings/#databases
-
+# DATABASE
 if env("DATABASE_URL", default=None):
-    DATABASES = {
-        'default': env.db()
-    }
+    DATABASES = {'default': env.db()}
 else:
     DATABASES = {
         'default': {
@@ -155,50 +109,27 @@ else:
         }
     }
 
-
-# Password validation
-# https://docs.djangoproject.com/en/6.0/ref/settings/#auth-password-validators
-
+# PASSWORD VALIDATION
 AUTH_PASSWORD_VALIDATORS = [
-    {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
-    },
+    {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
 ]
 
-
-# Internationalization
-# https://docs.djangoproject.com/en/6.0/topics/i18n/
-
+# INTERNATIONALIZATION
 LANGUAGE_CODE = 'en-us'
-
 TIME_ZONE = 'UTC'
-
 USE_I18N = True
-
 USE_TZ = True
 
-
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/6.0/howto/static-files/
-
-STATIC_URL = 'static/'
+# STATIC & MEDIA FILES
+STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / "staticfiles"
 STATICFILES_DIRS = [BASE_DIR / "static"]
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
-# --------------------------------------------------
-# AWS S3 / MEDIA STORAGE
-# --------------------------------------------------
 USE_S3 = env.bool("USE_S3", default=False)
-
 if USE_S3:
     AWS_ACCESS_KEY_ID = env("AWS_ACCESS_KEY_ID")
     AWS_SECRET_ACCESS_KEY = env("AWS_SECRET_ACCESS_KEY")
@@ -206,18 +137,13 @@ if USE_S3:
     AWS_S3_REGION_NAME = env("AWS_S3_REGION_NAME", default="us-east-1")
     AWS_S3_SIGNATURE_VERSION = "s3v4"
     
-    # Media
     DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
     MEDIA_URL = f"https://{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com/"
-    
-    # Static (optional, often better to keep static on WhiteNoise/local for simplicity in some setups)
-    # STATICFILES_STORAGE = "storages.backends.s3boto3.S3StaticStorage"
 else:
     MEDIA_URL = '/media/'
     MEDIA_ROOT = BASE_DIR / 'media'
 
-#DJANGO REST FRAMEWORK
-# --------------------------------------------------
+# DJANGO REST FRAMEWORK
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework.authentication.TokenAuthentication',
@@ -236,9 +162,7 @@ REST_FRAMEWORK = {
     }
 }
 
-# --------------------------------------------------
 # CELERY CONFIGURATION
-# --------------------------------------------------
 CELERY_BROKER_URL = env("CELERY_BROKER_URL", default="redis://127.0.0.1:6379/0")
 CELERY_RESULT_BACKEND = env("CELERY_RESULT_BACKEND", default="redis://127.0.0.1:6379/0")
 CELERY_ACCEPT_CONTENT = ['json']
@@ -246,71 +170,29 @@ CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE = TIME_ZONE
 
-# --------------------------------------------------
-# LOGGING & SENTRY
-# --------------------------------------------------
+# SENTRY CONFIGURATION
 import sentry_sdk
 from sentry_sdk.integrations.django import DjangoIntegration
 from sentry_sdk.integrations.celery import CeleryIntegration
 from sentry_sdk.integrations.redis import RedisIntegration
 
 SENTRY_DSN = env("SENTRY_DSN", default=None)
-
 if SENTRY_DSN and not DEBUG:
     sentry_sdk.init(
         dsn=SENTRY_DSN,
-        integrations=[
-            DjangoIntegration(),
-            CeleryIntegration(),
-            RedisIntegration(),
-        ],
-        traces_sample_rate=0.1,  # Capture 10% of transactions for performance monitoring
+        integrations=[DjangoIntegration(), CeleryIntegration(), RedisIntegration()],
+        traces_sample_rate=0.1,
         send_default_pii=True
     )
 
-LOGGING = {
-    'version': 1,
-    'disable_existing_loggers': False,
-    'handlers': {
-        'console': {
-            'class': 'logging.StreamHandler',
-        },
-    },
-    'root': {
-        'handlers': ['console'],
-        'level': 'WARNING',
-    },
-    'loggers': {
-        'django': {
-            'handlers': ['console'],
-            'level': env('DJANGO_LOG_LEVEL', default='INFO'),
-            'propagate': False,
-        },
-    },
-}
-
-# --------------------------------------------------
-# SEARCH CONFIGURATION (Meilisearch)
-# --------------------------------------------------
-MEILISEARCH_URL = env("MEILISEARCH_URL", default="http://127.0.0.1:7700")
-MEILISEARCH_API_KEY = env("MEILISEARCH_API_KEY", default="")
-
-
-# --------------------------------------------------
 # STRIPE CONFIGURATION
-# --------------------------------------------------
 STRIPE_SECRET_KEY = env("STRIPE_SECRET_KEY")
 STRIPE_PUBLISHABLE_KEY = env("STRIPE_PUBLISHABLE_KEY")
-
-# --------------------------------------------------
-# STRIPE URLS
-# --------------------------------------------------
 STRIPE_SUCCESS_URL = env("STRIPE_SUCCESS_URL", default="http://localhost:8000/orders/success/")
+STRIPE_CANCEL_URL = env("STRIPE_CANCEL_URL", default="http://localhost:8000/orders/cancel/")
 STRIPE_WEBHOOK_SECRET = env("STRIPE_WEBHOOK_SECRET", default="")
 
-# --------------------------------------------------
 # EMAIL CONFIGURATION
-# --------------------------------------------------
 EMAIL_BACKEND = env('EMAIL_BACKEND', default='django.core.mail.backends.smtp.EmailBackend')
 EMAIL_HOST = env('EMAIL_HOST', default='smtp.gmail.com')
 EMAIL_PORT = env.int('EMAIL_PORT', default=587)
@@ -318,11 +200,8 @@ EMAIL_USE_TLS = env.bool('EMAIL_USE_TLS', default=True)
 EMAIL_HOST_USER = env('EMAIL_HOST_USER', default='')
 EMAIL_HOST_PASSWORD = env('EMAIL_HOST_PASSWORD', default='')
 DEFAULT_FROM_EMAIL = env('DEFAULT_FROM_EMAIL', default=EMAIL_HOST_USER)
-STRIPE_CANCEL_URL = env("STRIPE_CANCEL_URL", default="http://localhost:8000/orders/cancel/")
 
-# --------------------------------------------------
 # M-PESA CONFIGURATION
-# --------------------------------------------------
 MPESA_CONSUMER_KEY = env("MPESA_CONSUMER_KEY", default="your_consumer_key")
 MPESA_CONSUMER_SECRET = env("MPESA_CONSUMER_SECRET", default="your_consumer_secret")
 MPESA_SHORTCODE = env("MPESA_SHORTCODE", default="174379")
