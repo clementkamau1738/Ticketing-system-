@@ -1,14 +1,43 @@
-# Python
+# --------------------------------------------------
+# Python cache and bytecode
+# --------------------------------------------------
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
+*.swp
+*.swo
 
-# Virtual env
+# --------------------------------------------------
+# Virtual environments
+# --------------------------------------------------
 venv/
 .env
+.env.*
 
-# Django
+# --------------------------------------------------
+# Django specific
+# --------------------------------------------------
 db.sqlite3
 media/
 staticfiles/
+*.log
+
+# Ignore Django migrations compiled files only (optional)
+**/migrations/__pycache__/
+**/migrations/*.pyc
+
+# --------------------------------------------------
+# IDE / Editor
+# --------------------------------------------------
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# --------------------------------------------------
+# Windows / macOS system files
+# --------------------------------------------------
+.DS_Store
+Thumbs.db
+desktop.ini
